@@ -1,0 +1,131 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}Mon Dashboard - FlahaSmart{% endblock %}
+
+{% block body %}
+<div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+    <!-- Header avec Profil -->
+    <div class="bg-white rounded-3xl shadow-xl overflow-hidden mb-8 border border-green-50">
+        <div class="h-32 bg-gradient-to-r from-green-600 to-green-400"></div>
+        <div class="px-8 pb-8">
+            <div class="relative flex justify-between items-end -mt-12 mb-6">
+                <div class="flex items-end space-x-6">
+                    <div class="h-32 w-32 rounded-3xl border-4 border-white bg-white shadow-2xl flex items-center justify-center overflow-hidden">
+                        <img src="https://ui-avatars.com/api/?name={{ app.user.nom }}+{{ app.user.prenom }}&background=10b981&color=fff&size=128" alt="Avatar" class="w-full h-full object-cover">
+                    </div>
+                    <div class="pb-2">
+                        <h1 class="text-3xl font-bold text-gray-900">{{ app.user.nom }} {{ app.user.prenom }}</h1>
+                        <p class="text-green-600 font-medium flex items-center">
+                            <span class="mr-2">📍 {{ app.user.ville|default('Tunisie') }}</span>
+                            <span class="bg-green-100 text-green-700 px-3 py-1 rounded-full text-xs font-bold">{{ app.user.role }}</span>
+                        </p>
+                    </div>
+                </div>
+                <div class="pb-2">
+                    <a href="{{ path('thread_new') }}" class="inline-flex items-center px-6 py-3 border border-transparent text-base font-medium rounded-2xl shadow-sm text-white bg-green-600 hover:bg-green-700 transition-all transform hover:scale-105">
+                        + Créer une discussion
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+        <!-- Colonne Gauche : Réputation & Stats -->
+        <div class="space-y-8">
+            <!-- Carte Réputation -->
+            <div class="bg-white rounded-3xl shadow-lg p-8 border border-green-50 relative overflow-hidden">
+                <div class="absolute top-0 right-0 -mr-8 -mt-8 w-32 h-32 bg-green-50 rounded-full opacity-50"></div>
+                <h3 class="text-lg font-bold text-gray-800 mb-6 flex items-center">
+                    <span class="bg-green-100 p-2 rounded-xl mr-3">🏆</span>
+                    Ma Réputation
+                </h3>
+                <div class="text-center mb-6">
+                    <span class="text-5xl font-black text-green-600">{{ reputation.points }}</span>
+                    <p class="text-gray-400 text-sm font-medium mt-1 uppercase tracking-widest">Points accumulés</p>
+                </div>
+                <div class="bg-gray-50 rounded-2xl p-4 mb-4">
+                    <div class="flex justify-between items-center mb-2">
+                        <span class="text-sm font-bold text-gray-600">{{ reputation.badge }}</span>
+                        {% set next_goal = 100 %}
+                        {% if reputation.points < 11 %}{% set next_goal = 11 %}
+                        {% elseif reputation.points < 51 %}{% set next_goal = 51 %}
+                        {% elseif reputation.points < 101 %}{% set next_goal = 101 %}
+                        {% endif %}
+                        <span class="text-xs text-gray-400">Objectif : {{ next_goal }}</span>
+                    </div>
+                    <div class="w-full bg-gray-200 rounded-full h-3 overflow-hidden">
+                        {% set progress = (reputation.points / next_goal) * 100 %}
+                        <div class="bg-green-500 h-full rounded-full transition-all duration-1000" style="width: {{ min(100, progress) }}%"></div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Stats Rapides -->
+            <div class="grid grid-cols-2 gap-4">
+                <div class="bg-white rounded-3xl shadow-lg p-6 border border-green-50 text-center">
+                    <span class="text-2xl font-bold text-gray-800 block">{{ threadCount }}</span>
+                    <span class="text-xs text-gray-500 uppercase font-bold">Threads</span>
+                </div>
+                <div class="bg-white rounded-3xl shadow-lg p-6 border border-green-50 text-center">
+                    <span class="text-2xl font-bold text-gray-800 block">{{ commentCount }}</span>
+                    <span class="text-xs text-gray-500 uppercase font-bold">Réponses</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- Colonne Centrale : Activité Récente -->
+        <div class="lg:col-span-2 space-y-8">
+            <!-- Threads Récents -->
+            <div class="bg-white rounded-3xl shadow-lg p-8 border border-green-50">
+                <h3 class="text-lg font-bold text-gray-800 mb-6 flex items-center">
+                    <span class="bg-blue-100 p-2 rounded-xl mr-3">📝</span>
+                    Mes dernières discussions
+                </h3>
+                <div class="space-y-4">
+                    {% for thread in recentThreads %}
+                        <a href="{{ path('thread_show', {id: thread.idThread}) }}" class="flex items-center p-4 rounded-2xl hover:bg-gray-50 transition-all border border-transparent hover:border-green-100 group">
+                            <div class="h-10 w-10 bg-green-50 rounded-xl flex items-center justify-center text-green-600 font-bold mr-4 group-hover:bg-green-600 group-hover:text-white transition-colors">
+                                {{ loop.index }}
+                            </div>
+                            <div class="flex-1">
+                                <h4 class="font-bold text-gray-800 group-hover:text-green-700">{{ thread.titre }}</h4>
+                                <p class="text-xs text-gray-400">{{ thread.dateCreation|ago }}</p>
+                            </div>
+                            <svg class="h-5 w-5 text-gray-300 group-hover:text-green-500" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/></svg>
+                        </a>
+                    {% else %}
+                        <div class="text-center py-10">
+                            <p class="text-gray-400 italic">Vous n'avez pas encore lancé de discussion.</p>
+                        </div>
+                    {% endfor %}
+                </div>
+            </div>
+
+            <!-- Notifications Flash -->
+            <div class="bg-white rounded-3xl shadow-lg p-8 border border-green-50">
+                <div class="flex justify-between items-center mb-6">
+                    <h3 class="text-lg font-bold text-gray-800 flex items-center">
+                        <span class="bg-yellow-100 p-2 rounded-xl mr-3">🔔</span>
+                        Alertes récentes
+                    </h3>
+                    <a href="{{ path('notifications_index') }}" class="text-xs font-bold text-green-600 hover:underline">Voir tout</a>
+                </div>
+                <div class="space-y-3">
+                    {% for notif in unreadNotifications %}
+                        <div class="p-4 bg-yellow-50 rounded-2xl border border-yellow-100 flex items-start">
+                            <span class="mr-3 mt-1 text-sm">✨</span>
+                            <div class="flex-1">
+                                <p class="text-sm text-yellow-900 font-medium">{{ notif.message }}</p>
+                                <span class="text-[10px] text-yellow-600 font-bold uppercase">{{ notif.dateNotif|ago }}</span>
+                            </div>
+                        </div>
+                    {% else %}
+                        <p class="text-center text-gray-400 py-4 italic">Aucune nouvelle notification.</p>
+                    {% endfor %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

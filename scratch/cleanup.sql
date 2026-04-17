@@ -1,0 +1,1 @@
+UPDATE threads SET contenu = REPLACE(contenu, '[[Traduit par l\'IA]] [Erreur de traduction IA: HTTP/2 404 returned for "https://api-inference.huggingface.co/models/Helsinki-NLP/opus-mt-fr-en".]', ''), titre = REPLACE(titre, '[EN] [Erreur de traduction IA: HTTP/2 404 returned for "https://api-inference.huggingface.co/models/Helsinki-NLP/opus-mt-fr-en".]', '');

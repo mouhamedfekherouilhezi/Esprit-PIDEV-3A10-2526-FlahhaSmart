@@ -1,0 +1,40 @@
+{% extends 'base.html.twig' %}
+
+{% block body %}
+    <div class="max-w-2xl mx-auto px-4 sm:px-6 lg:px-8 py-10">
+        <div class="premium-card p-8 sm:p-12 overflow-hidden">
+            <div class="h-2 bg-gradient-to-r from-blue-500 to-brand-700 -mt-12 -mx-12 mb-8 uppercase text-center py-2 text-[10px] font-black tracking-widest text-white">Modification</div>
+
+            <h1 class="text-3xl font-black text-gray-900 tracking-tight mb-8">
+                <i class="fas fa-pen-fancy text-brand-600 mr-2"></i>
+                Modifier votre discussion
+            </h1>
+
+            {{ form_start(form, {attr: {novalidate: 'novalidate', class: 'space-y-6'}}) }}
+                {{ form_errors(form) }}
+                
+                <div class="space-y-2">
+                    <label class="text-xs font-black uppercase text-gray-400 tracking-widest">Titre</label>
+                    {{ form_widget(form.titre, {attr: {class: 'w-full bg-gray-50 border-gray-100 rounded-2xl p-4 focus:ring-2 focus:ring-brand-500 outline-none transition-all placeholder-gray-300'}}) }}
+                </div>
+
+                <div class="space-y-2">
+                    <label class="text-xs font-black uppercase text-gray-400 tracking-widest">Message</label>
+                    {{ form_widget(form.contenu, {attr: {class: 'w-full bg-gray-50 border-gray-100 rounded-2xl p-4 focus:ring-2 focus:ring-brand-500 outline-none transition-all placeholder-gray-300', rows: 8}}) }}
+                </div>
+
+                <div class="space-y-2">
+                    <label class="text-xs font-black uppercase text-gray-400 tracking-widest">Mots-clés</label>
+                    {{ form_widget(form.tags, {attr: {class: 'w-full bg-gray-50 border-gray-100 rounded-2xl p-4 focus:ring-2 focus:ring-brand-500 outline-none transition-all placeholder-gray-300'}}) }}
+                </div>
+
+                <div class="pt-6 flex flex-col sm:flex-row items-center gap-4">
+                    <button type="submit" class="w-full sm:w-auto px-10 py-4 bg-brand-600 text-white text-sm font-bold rounded-2xl shadow-lg shadow-brand-600/20 hover:bg-brand-700 hover:-translate-y-0.5 transition-all">
+                         Enregistrer les modifications
+                    </button>
+                    <a href="{{ path('thread_show', {id: thread.idThread}) }}" class="text-sm font-bold text-gray-400 hover:text-gray-600 transition-colors px-6">Retour</a>
+                </div>
+            {{ form_end(form) }}
+        </div>
+    </div>
+{% endblock %}

@@ -1,0 +1,11 @@
+/* personnalisations supplémentaires */
+.vote-up, .vote-down, .like-btn {
+    cursor: pointer;
+    transition: all 0.2s;
+}
+.vote-up:hover, .vote-down:hover {
+    transform: scale(1.1);
+}
+.like-btn.text-red-500 {
+    color: #e53935;
+}

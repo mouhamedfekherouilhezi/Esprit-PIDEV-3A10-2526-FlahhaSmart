@@ -1,0 +1,404 @@
+{% extends 'admin/base_admin.html.twig' %}
+
+{% block title %}Dashboard — FlahaSmart Admin{% endblock %}
+
+{% block admin_body %}
+
+    {# ══════════════════════════════════════════════
+   HERO STATS CARDS
+══════════════════════════════════════════════ #}
+    <div class="stats-header">
+        <div class="page-title">
+            <span class="page-icon">⚡</span>
+            <div>
+                <h1>Tableau de bord</h1>
+                <p class="page-subtitle">Vue d'ensemble en temps réel — FlahaSmart Forum</p>
+            </div>
+        </div>
+        <div class="header-actions">
+            <span class="live-badge"><span class="live-dot"></span> En direct</span>
+            <a href="{{ path('admin_ai_moderation') }}" class="btn-ai">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2a10 10 0 0110 10c0 5.52-4.48 10-10 10S2 17.52 2 12 6.48 2 12 2zm0 4v4l3 3"/><circle cx="12" cy="12" r="1"/></svg>
+                Lancer l'IA
+            </a>
+        </div>
+    </div>
+
+    <div class="kpi-grid">
+        <div class="kpi-card kpi-threads">
+            <div class="kpi-bg-icon">💬</div>
+            <div class="kpi-content">
+                <p class="kpi-label">Threads actifs</p>
+                <p class="kpi-value" data-count="{{ threadCount }}">0</p>
+                <a href="{{ path('admin_threads') }}" class="kpi-link">Gérer →</a>
+            </div>
+            <div class="kpi-spark" id="spark-threads"></div>
+        </div>
+        <div class="kpi-card kpi-comments">
+            <div class="kpi-bg-icon">🗨️</div>
+            <div class="kpi-content">
+                <p class="kpi-label">Commentaires</p>
+                <p class="kpi-value" data-count="{{ commentCount }}">0</p>
+                <a href="{{ path('admin_commentaires') }}" class="kpi-link">Gérer →</a>
+            </div>
+            <div class="kpi-spark" id="spark-comments"></div>
+        </div>
+        <div class="kpi-card kpi-users">
+            <div class="kpi-bg-icon">👥</div>
+            <div class="kpi-content">
+                <p class="kpi-label">Utilisateurs</p>
+                <p class="kpi-value" data-count="{{ userCount }}">0</p>
+                <a href="{{ path('admin_users') }}" class="kpi-link">Gérer →</a>
+            </div>
+            <div class="kpi-spark" id="spark-users"></div>
+        </div>
+        <div class="kpi-card kpi-ai">
+            <div class="kpi-bg-icon">🤖</div>
+            <div class="kpi-content">
+                <p class="kpi-label">Modération IA</p>
+                <p class="kpi-value" id="ai-flagged">—</p>
+                <span class="kpi-link" id="ai-status">Chargement…</span>
+            </div>
+            <div class="kpi-indicator" id="ai-indicator"></div>
+        </div>
+    </div>
+
+    {# ══════════════════════════════════════════════
+   MAIN GRID — Chart + Weather + Recent
+══════════════════════════════════════════════ #}
+    <div class="main-grid">
+
+        {# === API 1 : Chart.js — Evolution 7 jours === #}
+        <div class="panel panel-chart">
+            <div class="panel-header">
+                <div class="panel-title">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>
+                    Évolution 7 jours
+                </div>
+                <div class="panel-tabs">
+                    <button class="tab active" data-type="line">Ligne</button>
+                    <button class="tab" data-type="bar">Barres</button>
+                </div>
+            </div>
+            <div class="chart-container">
+                <canvas id="mainChart"></canvas>
+            </div>
+        </div>
+
+        {# === API 2 : OpenWeatherMap — Météo Agricole === #}
+        <div class="panel panel-weather">
+            <div class="panel-header">
+                <div class="panel-title">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17.5 19H9a7 7 0 1 1 6.71-9h1.79a4.5 4.5 0 1 1 0 9z"/></svg>
+                    Météo Agricole
+                </div>
+                <span class="badge-source">OpenWeather API</span>
+            </div>
+            <div id="weather-widget">
+                <div class="weather-loading">
+                    <div class="spinner"></div>
+                    <span>Chargement météo…</span>
+                </div>
+            </div>
+        </div>
+
+        {# === Derniers Threads === #}
+        <div class="panel panel-threads">
+            <div class="panel-header">
+                <div class="panel-title">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
+                    Derniers threads
+                </div>
+                <a href="{{ path('admin_threads') }}" class="panel-link">Tout voir</a>
+            </div>
+            <div class="thread-list">
+                {% for thread in recentThreads %}
+                    <div class="thread-item">
+                        <div class="thread-sentiment sentiment-{{ thread.sentiment ?? 'neutre' }}">
+                            {{ thread.sentiment == 'positif' ? '😊' : (thread.sentiment == 'negatif' ? '😟' : '😐') }}
+                        </div>
+                        <div class="thread-info">
+                            <a href="{{ path('thread_show', {id: thread.idThread}) }}" class="thread-title">{{ thread.titre|slice(0,48) }}{% if thread.titre|length > 48 %}…{% endif %}</a>
+                            <p class="thread-meta">{{ thread.dateCreation|date('d/m/Y à H:i') }}</p>
+                        </div>
+                        <div class="thread-actions">
+                            <form method="post" action="{{ path('admin_thread_delete', {id: thread.idThread}) }}" onsubmit="return confirm('Supprimer ?')">
+                                <input type="hidden" name="_token" value="{{ csrf_token('delete' ~ thread.idThread) }}">
+                                <button class="btn-icon btn-danger" title="Supprimer">🗑</button>
+                            </form>
+                        </div>
+                    </div>
+                {% else %}
+                    <p class="empty-state">Aucun thread pour l'instant.</p>
+                {% endfor %}
+            </div>
+        </div>
+
+        {# === API 3 : API Ninjas + HuggingFace IA — Panneau Modération === #}
+        <div class="panel panel-moderation">
+            <div class="panel-header">
+                <div class="panel-title">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+                    Modération intelligente
+                </div>
+                <span class="badge-source">HuggingFace + API Ninjas</span>
+            </div>
+
+            {# Test en direct via API Ninjas sentiment #}
+            <div class="moderation-tester">
+                <label class="mod-label">Analyser un texte en direct</label>
+                <textarea id="mod-input" placeholder="Saisissez un commentaire à analyser…" rows="3"></textarea>
+                <button id="mod-analyze-btn" class="btn-analyze">
+                    <span class="btn-text">Analyser</span>
+                    <span class="btn-loader" style="display:none">⏳</span>
+                </button>
+                <div id="mod-result" class="mod-result" style="display:none"></div>
+            </div>
+
+            {# Bundles Symfony utilisés #}
+            <div class="bundles-section">
+                <p class="bundles-title">Bundles Symfony 6.4 actifs</p>
+                <div class="bundle-list">
+                    <div class="bundle-item">
+                        <span class="bundle-icon">🔐</span>
+                        <div>
+                            <p class="bundle-name">SecurityBundle</p>
+                            <p class="bundle-desc">Auth CSRF · Roles · Firewall</p>
+                        </div>
+                        <span class="bundle-status ok">✓</span>
+                    </div>
+                    <div class="bundle-item">
+                        <span class="bundle-icon">📋</span>
+                        <div>
+                            <p class="bundle-name">MonologBundle</p>
+                            <p class="bundle-desc">Logging · Handlers · Channels</p>
+                        </div>
+                        <span class="bundle-status ok">✓</span>
+                    </div>
+                    <div class="bundle-item">
+                        <span class="bundle-icon">🌿</span>
+                        <div>
+                            <p class="bundle-name">TwigBundle</p>
+                            <p class="bundle-desc">Templates · Extensions · Filters</p>
+                        </div>
+                        <span class="bundle-status ok">✓</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+    </div>
+
+    {# ══════════════════════════════════════════════
+   SCRIPTS
+══════════════════════════════════════════════ #}
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+    <script>
+        // ── Counter animation ──
+        document.querySelectorAll('.kpi-value[data-count]').forEach(el => {
+            const target = parseInt(el.dataset.count);
+            let current = 0;
+            const step = Math.ceil(target / 40);
+            const timer = setInterval(() => {
+                current = Math.min(current + step, target);
+                el.textContent = current.toLocaleString('fr-FR');
+                if (current >= target) clearInterval(timer);
+            }, 30);
+        });
+
+        // ── API 1: Chart.js via /api/stats/overview ──
+        let mainChart = null;
+        let chartType = 'line';
+
+        async function loadChart(type = 'line') {
+            try {
+                const res = await fetch('/api/stats/overview');
+                const data = await res.json();
+
+                // KPI IA
+                document.getElementById('ai-flagged').textContent = data.flagged_comments ?? '0';
+                document.getElementById('ai-status').textContent = 'Signalements / ' + (data.comments ?? '0');
+
+                const labels = data.evolution.map(i => {
+                    const d = new Date(i.date);
+                    return d.toLocaleDateString('fr-FR', {day:'2-digit', month:'short'});
+                });
+                const values = data.evolution.map(i => i.count);
+
+                const ctx = document.getElementById('mainChart').getContext('2d');
+                if (mainChart) mainChart.destroy();
+
+                const gradient = ctx.createLinearGradient(0, 0, 0, 300);
+                gradient.addColorStop(0, 'rgba(52, 211, 153, 0.35)');
+                gradient.addColorStop(1, 'rgba(52, 211, 153, 0)');
+
+                mainChart = new Chart(ctx, {
+                    type,
+                    data: {
+                        labels,
+                        datasets: [{
+                            label: 'Nouveaux threads',
+                            data: values,
+                            borderColor: '#34d399',
+                            backgroundColor: type === 'line' ? gradient : 'rgba(52,211,153,0.6)',
+                            borderWidth: 2.5,
+                            tension: 0.4,
+                            fill: type === 'line',
+                            pointBackgroundColor: '#34d399',
+                            pointRadius: 5,
+                            pointHoverRadius: 8,
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        plugins: {
+                            legend: { display: false },
+                            tooltip: {
+                                backgroundColor: '#1e293b',
+                                titleColor: '#94a3b8',
+                                bodyColor: '#f8fafc',
+                                borderColor: '#334155',
+                                borderWidth: 1,
+                                padding: 12,
+                            }
+                        },
+                        scales: {
+                            x: { grid: { color: 'rgba(255,255,255,0.05)' }, ticks: { color: '#64748b' } },
+                            y: { beginAtZero: true, grid: { color: 'rgba(255,255,255,0.05)' }, ticks: { color: '#64748b', precision: 0 } }
+                        }
+                    }
+                });
+            } catch(e) { console.error('Chart error', e); }
+        }
+
+        document.querySelectorAll('.tab').forEach(btn => {
+            btn.addEventListener('click', () => {
+                document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+                btn.classList.add('active');
+                chartType = btn.dataset.type;
+                loadChart(chartType);
+            });
+        });
+
+        loadChart();
+
+        // ── API 2: OpenWeatherMap ──
+        async function loadWeather() {
+            const CITY = 'Tunis';
+            const API_KEY = 'bd5e378503939ddaee76f12ad7a97608'; // demo key
+            try {
+                const res = await fetch(`https://api.openweathermap.org/data/2.5/weather?q=${CITY},TN&appid=${API_KEY}&units=metric&lang=fr`);
+                const w = await res.json();
+
+                if (w.cod !== 200) throw new Error('API error');
+
+                const icon = w.weather[0].icon;
+                const desc = w.weather[0].description;
+                const temp = Math.round(w.main.temp);
+                const humidity = w.main.humidity;
+                const wind = Math.round(w.wind.speed * 3.6);
+                const feels = Math.round(w.main.feels_like);
+
+                // Conseil agricole selon météo
+                const advice = temp > 35 ? '🌵 Chaleur intense — Arrosage tôt le matin recommandé'
+                    : temp < 10 ? '🧊 Froid — Protégez les cultures sensibles'
+                        : humidity > 80 ? '💧 Humidité élevée — Risque de champignons'
+                            : wind > 40 ? '🌬️ Vent fort — Évitez les traitements phytosanitaires'
+                                : '✅ Conditions favorables pour les travaux agricoles';
+
+                document.getElementById('weather-widget').innerHTML = `
+            <div class="weather-main">
+                <div class="weather-left">
+                    <img src="https://openweathermap.org/img/wn/${icon}@2x.png" alt="${desc}" class="weather-icon">
+                    <div>
+                        <p class="weather-temp">${temp}°C</p>
+                        <p class="weather-desc">${desc}</p>
+                        <p class="weather-city">📍 ${CITY}, Tunisie</p>
+                    </div>
+                </div>
+                <div class="weather-details">
+                    <div class="weather-stat"><span>💧</span><span>${humidity}%</span><small>Humidité</small></div>
+                    <div class="weather-stat"><span>🌬️</span><span>${wind} km/h</span><small>Vent</small></div>
+                    <div class="weather-stat"><span>🌡️</span><span>${feels}°C</span><small>Ressenti</small></div>
+                </div>
+            </div>
+            <div class="weather-advice">${advice}</div>
+        `;
+            } catch(e) {
+                document.getElementById('weather-widget').innerHTML = `
+            <div class="weather-error">
+                <span>🌐</span>
+                <p>Météo indisponible — Vérifiez la clé API OpenWeather</p>
+            </div>
+        `;
+            }
+        }
+
+        loadWeather();
+
+        // ── API 3: Anthropic Claude (via proxy Symfony) — Analyse IA ──
+        document.getElementById('mod-analyze-btn').addEventListener('click', async () => {
+            const text = document.getElementById('mod-input').value.trim();
+            if (!text) return;
+
+            const btn = document.getElementById('mod-analyze-btn');
+            btn.querySelector('.btn-text').style.display = 'none';
+            btn.querySelector('.btn-loader').style.display = 'inline';
+            btn.disabled = true;
+
+            const resultDiv = document.getElementById('mod-result');
+            resultDiv.style.display = 'none';
+
+            try {
+                // Appel à l'endpoint Symfony qui proxy vers API Ninjas sentiment
+                const res = await fetch('/api/moderate-preview', {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json', 'X-Requested-With': 'XMLHttpRequest'},
+                    body: JSON.stringify({ text })
+                });
+
+                if (!res.ok) throw new Error('Endpoint indisponible');
+                const data = await res.json();
+
+                const sentimentEmoji = data.sentiment === 'positive' ? '😊 Positif'
+                    : data.sentiment === 'negative' ? '😟 Négatif'
+                        : '😐 Neutre';
+                const toxicClass = data.toxic ? 'mod-toxic' : 'mod-safe';
+                const toxicLabel = data.toxic ? '🚨 Contenu signalé' : '✅ Contenu approuvé';
+
+                resultDiv.className = `mod-result ${toxicClass}`;
+                resultDiv.innerHTML = `
+            <div class="mod-result-header">${toxicLabel}</div>
+            <div class="mod-result-body">
+                <span class="mod-tag">Sentiment : ${sentimentEmoji}</span>
+                ${data.censored ? `<span class="mod-tag mod-tag-warn">Profanité détectée</span>` : ''}
+                ${data.reason ? `<p class="mod-reason">${data.reason}</p>` : ''}
+            </div>
+        `;
+                resultDiv.style.display = 'block';
+            } catch(e) {
+                // Fallback : simulation locale basique
+                const lower = text.toLowerCase();
+                const badWords = ['idiot', 'nul', 'merde', 'stupide'];
+                const isBad = badWords.some(w => lower.includes(w));
+                const sentiment = isBad ? 'négatif' : 'neutre';
+
+                resultDiv.className = `mod-result ${isBad ? 'mod-toxic' : 'mod-safe'}`;
+                resultDiv.innerHTML = `
+            <div class="mod-result-header">${isBad ? '🚨 Contenu signalé (analyse locale)' : '✅ Contenu approuvé (analyse locale)'}</div>
+            <div class="mod-result-body">
+                <span class="mod-tag">Sentiment : ${sentiment}</span>
+                <p class="mod-reason" style="font-size:11px;opacity:0.6">Mode local — connectez /api/moderate-preview pour l'IA complète</p>
+            </div>
+        `;
+                resultDiv.style.display = 'block';
+            }
+
+            btn.querySelector('.btn-text').style.display = 'inline';
+            btn.querySelector('.btn-loader').style.display = 'none';
+            btn.disabled = false;
+        });
+    </script>
+
+{% endblock %}

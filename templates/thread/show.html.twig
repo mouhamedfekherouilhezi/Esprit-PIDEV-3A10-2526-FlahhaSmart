@@ -1,0 +1,232 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}{{ thread.titre }} - FlahaSmart{% endblock %}
+
+{% block body %}
+<div class="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-10">
+    <!-- Bouton Retour -->
+    <a href="{{ path('thread_index') }}" class="inline-flex items-center text-sm font-bold text-gray-400 hover:text-brand-600 transition-colors mb-6 group">
+        <i class="fas fa-arrow-left mr-2 transform group-hover:-translate-x-1 transition-transform"></i>
+        Retour au forum
+    </a>
+
+    <!-- Article Principal -->
+    <article class="premium-card overflow-hidden mb-10 shadow-2xl">
+        <div class="h-2 bg-gradient-to-r from-brand-500 to-brand-700"></div>
+        <div class="p-8 sm:p-12">
+            <div class="flex gap-6">
+                <!-- Zone de Vote Verticale -->
+                <div class="flex flex-col items-center bg-gray-50 py-3 px-2 rounded-2xl min-w-[3.5rem] h-fit shadow-inner">
+                    <button class="vote-up p-2 rounded-xl transition-all hover:bg-brand-100 hover:text-brand-600
+                        {% if thread.userVote == 'up' %}text-brand-600 bg-brand-100 shadow-sm{% else %}text-gray-400{% endif %}"
+                        data-id="{{ thread.idThread }}" data-type="up">
+                        <i class="fas fa-chevron-up"></i>
+                    </button>
+                    <span class="score my-2 font-black text-lg text-gray-800">{{ thread.score|default(0) }}</span>
+                    <button class="vote-down p-2 rounded-xl transition-all hover:bg-red-100 hover:text-red-600
+                        {% if thread.userVote == 'down' %}text-red-600 bg-red-100 shadow-sm{% else %}text-gray-400{% endif %}"
+                        data-id="{{ thread.idThread }}" data-type="down">
+                        <i class="fas fa-chevron-down"></i>
+                    </button>
+                </div>
+
+                <div class="flex-1">
+                    <div class="flex items-center gap-4 mb-8">
+                        <img src="https://ui-avatars.com/api/?name={{ thread.auteur.nom|default('A') }}&background=f0fdf4&color=059669&size=64" 
+                             class="w-12 h-12 rounded-2xl shadow-sm" alt="Avatar">
+                        <div>
+                            <h1 class="text-3xl sm:text-4xl font-black text-gray-900 leading-tight mb-1">{{ thread.titre }}</h1>
+                            <div class="flex items-center text-xs font-bold text-gray-400 uppercase tracking-widest">
+                                <span class="text-brand-600">Par {{ thread.auteur.nom|default('Anonyme') }}</span>
+                                <span class="mx-3 opacity-30">•</span>
+                                <span>{{ thread.dateCreation|date('d F Y à H:i') }}</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="prose prose-brand max-w-none">
+                        <p class="text-gray-700 text-lg leading-relaxed whitespace-pre-line" id="thread-content">
+                            {{ thread.contenu }}
+                        </p>
+                    </div>
+                </div>
+            </div>
+
+            {% if thread.tags %}
+                <div class="mt-8 flex flex-wrap gap-2">
+                    {% for tag in thread.tags|split(',') %}
+                        <span class="bg-gray-100 text-gray-600 text-[10px] font-black uppercase px-3 py-1.5 rounded-lg border border-gray-200">
+                            #{{ tag|trim }}
+                        </span>
+                    {% endfor %}
+                </div>
+            {% endif %}
+
+            <div class="mt-10 flex flex-wrap items-center justify-between gap-6 pt-8 border-t border-gray-100">
+                <div class="flex items-center gap-4">
+                    <button class="translate-btn px-6 py-2.5 bg-blue-50 text-blue-600 text-xs font-bold rounded-2xl hover:bg-blue-100 transition-all uppercase tracking-widest flex items-center"
+                            data-id="{{ thread.idThread }}" data-type="thread">
+                        <i class="fas fa-language text-lg mr-3"></i>Traduire en Anglais (IA)
+                    </button>
+                    
+                    {% if app.user and thread.auteur and app.user.idUser == thread.auteur.idUser %}
+                        <div class="flex gap-2">
+                            <a href="{{ path('thread_edit', {id: thread.idThread}) }}" class="p-2.5 bg-gray-50 text-gray-400 hover:text-brand-600 hover:bg-brand-50 rounded-xl transition-all">
+                                <i class="fas fa-edit"></i>
+                            </a>
+                            <form method="post" action="{{ path('thread_delete', {id: thread.idThread}) }}" class="inline-block" onsubmit="return confirm('Supprimer définitivement ?');">
+                                <input type="hidden" name="_token" value="{{ csrf_token('delete' ~ thread.idThread) }}">
+                                <button type="submit" class="p-2.5 bg-gray-50 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded-xl transition-all">
+                                    <i class="fas fa-trash"></i>
+                                </button>
+                            </form>
+                        </div>
+                    {% endif %}
+                </div>
+                
+                <div class="flex items-center gap-2">
+                    <span class="px-3 py-1 bg-yellow-100 text-yellow-700 text-[10px] font-black uppercase rounded-lg">
+                        {{ thread.sentiment|default('Analyse...') }}
+                    </span>
+                </div>
+            </div>
+        </div>
+    </article>
+
+    <!-- Zone Commentaires -->
+    <div class="space-y-8">
+        <div class="flex items-center justify-between border-b border-gray-100 pb-4">
+            <h2 class="text-2xl font-black text-gray-900 tracking-tight">
+                <i class="fas fa-comments text-brand-600 mr-2"></i>
+                Commentaires <span class="text-gray-300 ml-2">({{ comments|length }})</span>
+            </h2>
+        </div>
+
+        <div class="space-y-6">
+            {% for comment in comments %}
+                <div class="premium-card p-6 bg-white/50 border-gray-100 relative group">
+                    <div class="flex justify-between items-start mb-4">
+                        <div class="flex items-center gap-3">
+                            <img src="https://ui-avatars.com/api/?name={{ comment.auteur.nom|default('A') }}&background=f8fafc&color=94a3b8&size=32" class="w-8 h-8 rounded-xl" alt="U">
+                            <div>
+                                <h4 class="text-sm font-bold text-gray-900">{{ comment.auteur.nom|default('Anonyme') }}</h4>
+                                <span class="text-[10px] font-bold text-gray-400 uppercase">{{ comment.dateCreation|date('d/m/Y H:i') }}</span>
+                            </div>
+                        </div>
+                        
+                        {% if app.user and comment.auteur and app.user.idUser == comment.auteur.idUser %}
+                            <div class="flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                                <a href="{{ path('commentaire_edit', {id: comment.idCommentaire}) }}" class="p-1.5 text-gray-400 hover:text-brand-600 transition-colors">
+                                    <i class="fas fa-edit text-xs"></i>
+                                </a>
+                                <form method="post" action="{{ path('commentaire_delete', {id: comment.idCommentaire}) }}" class="inline-block" onsubmit="return confirm('Supprimer ?');">
+                                    <input type="hidden" name="_token" value="{{ csrf_token('delete' ~ comment.idCommentaire) }}">
+                                    <button type="submit" class="p-1.5 text-gray-400 hover:text-red-600 transition-colors">
+                                        <i class="fas fa-trash text-xs"></i>
+                                    </button>
+                                </form>
+                            </div>
+                        {% endif %}
+                    </div>
+                    
+                    <p class="text-gray-600 text-sm leading-relaxed mb-4 comment-content">{{ comment.contenu }}</p>
+                    
+                    <div class="flex items-center justify-between">
+                         <button class="translate-btn text-[10px] font-black text-blue-500 uppercase tracking-widest hover:text-blue-700 transition-colors" 
+                                data-id="{{ comment.idCommentaire }}" data-type="comment">
+                            <i class="fas fa-language mr-1"></i>Translate
+                        </button>
+                        <span class="text-[10px] font-bold uppercase tracking-tighter opacity-50">{{ comment.sentiment }}</span>
+                    </div>
+                </div>
+            {% else %}
+                <div class="text-center py-12 bg-gray-50 rounded-3xl border border-dashed border-gray-200">
+                    <p class="text-gray-400 italic text-sm">Soyez le premier à commenter cette discussion !</p>
+                </div>
+            {% endfor %}
+        </div>
+
+        <!-- Formulaire nouveau commentaire -->
+        {% if app.user %}
+            <div class="premium-card p-8 bg-brand-50/50 border-brand-100">
+                <h3 class="text-lg font-bold text-brand-800 mb-4 flex items-center">
+                    <i class="fas fa-pen-nib mr-2"></i>Votre réponse
+                </h3>
+                <form method="post" action="{{ path('commentaire_new', {threadId: thread.idThread}) }}">
+                    <textarea name="contenu" rows="4" required
+                              class="w-full bg-white border border-brand-100 rounded-2xl p-4 text-sm focus:ring-2 focus:ring-brand-500 focus:border-brand-500 outline-none transition-all placeholder-gray-400"
+                              placeholder="Partagez vos conseils ou posez une question..."></textarea>
+                    <div class="flex justify-end mt-4">
+                        <button type="submit" class="px-8 py-3 bg-brand-600 text-white text-sm font-bold rounded-2xl shadow-lg shadow-brand-600/20 hover:bg-brand-700 hover:-translate-y-0.5 transition-all">
+                            Publier la réponse
+                        </button>
+                    </div>
+                </form>
+            </div>
+        {% else %}
+            <div class="text-center p-8 bg-gray-50 rounded-3xl">
+                <p class="text-gray-600 text-sm mb-4">Vous devez être connecté pour participer à la discussion.</p>
+                <a href="{{ path('app_login') }}" class="inline-flex items-center px-6 py-2 bg-brand-600 text-white text-xs font-bold rounded-xl hover:bg-brand-700 transition-all">Connexion</a>
+            </div>
+        {% endif %}
+    </div>
+</div>
+
+{% endblock %}
+
+{% block javascripts %}
+<script>
+$(document).ready(function() {
+    // Gestion des votes
+    $('.vote-up, .vote-down').click(function(e) {
+        e.preventDefault();
+        let btn = $(this);
+        let id = btn.data('id');
+        let type = btn.data('type');
+        let card = btn.closest('.flex');
+        
+        $.post('/thread/' + id + '/vote/' + type, function(data) {
+            card.find('.score').fadeOut(100, function() {
+                $(this).text(data.score).fadeIn(100);
+            });
+            if (type === 'up') {
+                btn.addClass('text-brand-600 bg-brand-100 shadow-sm').removeClass('text-gray-400');
+                card.find('.vote-down').removeClass('text-red-600 bg-red-100 shadow-sm').addClass('text-gray-400');
+            } else {
+                btn.addClass('text-red-600 bg-red-100 shadow-sm').removeClass('text-gray-400');
+                card.find('.vote-up').removeClass('text-brand-600 bg-brand-100 shadow-sm').addClass('text-gray-400');
+            }
+        }).fail(function(xhr) {
+            if (xhr.status === 401) alert('Veuillez vous connecter pour voter.');
+        });
+    });
+
+    // Gestion de la traduction
+    $('.translate-btn').click(function() {
+        let btn = $(this);
+        let id = btn.data('id');
+        let type = btn.data('type');
+        let contentBox;
+        
+        if (type === 'thread') {
+            contentBox = $('#thread-content');
+        } else {
+            contentBox = btn.closest('.premium-card').find('.comment-content');
+        }
+        
+        btn.html('<i class="fas fa-spinner fa-spin mr-2"></i>...').prop('disabled', true);
+        
+        let url = (type === 'thread') ? '/ai/translate/thread/' + id : '/ai/translate/comment/' + id;
+        
+        $.post(url, function(data) {
+            contentBox.fadeOut(300, function() {
+                $(this).html('<span class="text-blue-600 font-bold text-[10px] uppercase">[Translated]</span><br>' + data.translated).fadeIn(300);
+            });
+            btn.html('<i class="fas fa-check mr-2"></i>OK').addClass('text-green-600');
+        }).fail(function() { 
+            btn.html('<i class="fas fa-language mr-1"></i>Retry').prop('disabled', false);
+        });
+    });
+});
+</script>
+{% endblock %}

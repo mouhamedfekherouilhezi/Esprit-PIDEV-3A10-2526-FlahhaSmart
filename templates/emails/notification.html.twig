@@ -1,0 +1,41 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <style>
+        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; line-height: 1.6; color: #333; margin: 0; padding: 0; }
+        .container { max-width: 600px; margin: 20px auto; background: #ffffff; border-radius: 20px; box-shadow: 0 10px 30px rgba(0,0,0,0.05); overflow: hidden; border: 1px solid #f0f0f0; }
+        .header { background: linear-gradient(135deg, #10b981 0%, #059669 100%); padding: 40px 20px; text-align: center; color: white; }
+        .content { padding: 40px; }
+        .footer { background: #f9fafb; padding: 20px; text-align: center; font-size: 12px; color: #9ca3af; }
+        .btn { display: inline-block; padding: 12px 30px; background-color: #10b981; color: white !important; text-decoration: none; border-radius: 12px; font-weight: bold; margin-top: 20px; }
+        .badge { display: inline-block; padding: 4px 12px; background: #ecfdf5; color: #065f46; border-radius: 20px; font-size: 12px; font-weight: bold; margin-bottom: 20px; }
+        h1 { margin: 0; font-size: 24px; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>FlahaSmart</h1>
+            <p>Le forum agricole intelligent</p>
+        </div>
+        <div class="content">
+            <div class="badge">🔔 Nouvelle Alerte</div>
+            <p>Bonjour <strong>{{ userName }}</strong>,</p>
+            <p>Il y a du nouveau sur votre compte FlahaSmart :</p>
+            
+            <div style="background: #f3f4f6; padding: 20px; border-radius: 15px; border-left: 4px solid #10b981; margin: 20px 0;">
+                <p style="margin: 0; color: #374151;">{{ message }}</p>
+            </div>
+
+            <p>Connectez-vous à votre dashboard pour voir les détails et interagir avec la communauté.</p>
+            
+            <a href="http://127.0.0.1:8000/dashboard" class="btn">Accéder à mon espace</a>
+        </div>
+        <div class="footer">
+            <p>&copy; {{ date|date('Y') }} FlahaSmart - Tous droits réservés.</p>
+            <p>Vous recevez cet email car vous êtes inscrit sur notre plateforme agricole.</p>
+        </div>
+    </div>
+</body>
+</html>

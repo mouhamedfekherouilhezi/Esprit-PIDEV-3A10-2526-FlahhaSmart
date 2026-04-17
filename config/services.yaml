@@ -1,0 +1,25 @@
+services:
+    _defaults:
+        autowire: true
+        autoconfigure: true
+
+    App\:
+        resource: '../src/'
+        exclude:
+            - '../src/DependencyInjection/'
+            - '../src/Entity/'
+            - '../src/Kernel.php'
+
+    # Service IA
+    App\Service\AiModerationService:
+        arguments:
+            $hfApiKey: '%env(HF_API_KEY)%'
+
+    App\Service\AiTranslationService:
+        arguments:
+            $hfApiKey: '%env(HF_API_KEY)%'
+
+    Symfony\Contracts\HttpClient\HttpClientInterface:
+        factory: ['Symfony\Component\HttpClient\HttpClient', 'create']
+        arguments:
+            - { verify_peer: false, verify_host: false }

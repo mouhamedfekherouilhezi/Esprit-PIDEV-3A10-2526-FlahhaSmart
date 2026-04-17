@@ -1,0 +1,158 @@
+<!DOCTYPE html>
+<html lang="fr" class="scroll-smooth">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}FlahaSmart - Forum Agricole{% endblock %}</title>
+    
+    <!-- Fonts & Icons -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+    <!-- CSS (Tailwind CDN) -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        brand: {
+                            50: '#f0fdf4',
+                            100: '#dcfce7',
+                            500: '#10b981',
+                            600: '#059669',
+                            700: '#047857',
+                        }
+                    },
+                    fontFamily: {
+                        sans: ['Outfit', 'sans-serif'],
+                    },
+                }
+            }
+        }
+    </script>
+    
+    <style>
+        body { font-family: 'Outfit', sans-serif; background-color: #f8fafc; color: #1e293b; }
+        .premium-card { background: white; border-radius: 1.5rem; transition: all 0.3s ease; border: 1px solid rgba(16, 185, 129, 0.05); shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1); }
+        .premium-card:hover { transform: translateY(-2px); box-shadow: 0 20px 25px -5px rgb(0 0 0 / 0.1); border-color: rgba(16, 185, 129, 0.2); }
+        .glass-nav { background: rgba(255, 255, 255, 0.8); backdrop-filter: blur(12px); border-bottom: 1px solid rgba(0, 0, 0, 0.05); }
+    </style>
+    
+    {% block stylesheets %}{% endblock %}
+    
+    <!-- JavaScripts Core -->
+    <script src="https://code.jquery.com/jquery-3.6.4.min.js"></script>
+</head>
+<body class="min-h-screen flex flex-col">
+
+<!-- Header / Navigation -->
+<nav class="glass-nav sticky top-0 z-50 transition-all duration-300">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div class="flex justify-between h-20">
+            <div class="flex items-center">
+                <a href="{{ path('thread_index') }}" class="flex items-center space-x-2">
+                    <div class="bg-brand-600 p-2 rounded-xl shadow-lg shadow-brand-500/30">
+                        <svg class="h-6 w-6 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" />
+                        </svg>
+                    </div>
+                    <span class="text-2xl font-bold tracking-tight text-brand-700">Flaha<span class="text-gray-900">Smart</span></span>
+                </a>
+                
+                <div class="hidden md:ml-12 md:flex items-center space-x-8">
+                    <a href="{{ path('thread_index') }}" class="text-sm font-semibold text-gray-600 hover:text-brand-600 transition-colors uppercase tracking-widest">Forum</a>
+                    <a href="{{ path('app_dashboard') }}" class="text-sm font-semibold text-gray-600 hover:text-brand-600 transition-colors uppercase tracking-widest">Mon Espace</a>
+                    {% if is_granted('ROLE_ADMIN') %}
+                        <a href="{{ path('admin_dashboard') }}" class="inline-flex items-center px-4 py-1.5 rounded-full bg-brand-50 text-brand-600 text-xs font-bold border border-brand-100 uppercase tracking-widest hover:bg-brand-100 transition-all">
+                            <i class="fas fa-shield-alt mr-2"></i>Admin
+                        </a>
+                    {% endif %}
+                </div>
+            </div>
+
+            <div class="flex items-center space-x-6">
+                {% if app.user %}
+                    <!-- Notifications -->
+                    <a href="{{ path('notifications_index') }}" class="relative p-2 text-gray-400 hover:text-brand-600 transition-all transform hover:scale-110">
+                        <i class="fas fa-bell text-xl"></i>
+                        {% set unreadCount = unread_notifications_count()|default(0) %}
+                        {% if unreadCount > 0 %}
+                            <span class="absolute top-1 right-1 flex h-5 w-5">
+                                <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-brand-400 opacity-75"></span>
+                                <span class="relative inline-flex rounded-full h-5 w-5 bg-brand-500 text-[10px] text-white font-bold items-center justify-center">{{ unreadCount }}</span>
+                            </span>
+                        {% endif %}
+                    </a>
+                    
+                    <!-- User Profile Dropdown -->
+                    <div class="hidden sm:flex items-center space-x-4 pl-4 border-l border-gray-100">
+                        <div class="text-right">
+                            <p class="text-sm font-bold text-gray-900 leading-none">{{ app.user.nom }}</p>
+                            <p class="text-[10px] text-gray-400 uppercase font-medium tracking-tighter">{{ app.user.role|lower }}</p>
+                        </div>
+                        <img src="https://ui-avatars.com/api/?name={{ app.user.nom }}&background=10b981&color=fff&rounded=true" alt="User" class="h-10 w-10 border-2 border-white shadow-sm">
+                        <a href="{{ path('app_logout') }}" class="p-2 text-gray-400 hover:text-red-500 transition-all">
+                            <i class="fas fa-power-off"></i>
+                        </a>
+                    </div>
+                {% else %}
+                    <a href="{{ path('app_login') }}" class="text-sm font-bold text-gray-700 hover:text-brand-600 px-4 py-2 transition-all">Connexion</a>
+                    <a href="#" class="inline-flex items-center px-6 py-2.5 bg-brand-600 text-white text-sm font-bold rounded-2xl shadow-lg shadow-brand-600/20 hover:bg-brand-700 hover:-translate-y-0.5 transition-all">Rejoindre</a>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</nav>
+
+<!-- Flash Messages -->
+<div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 mt-4">
+    {% for label, messages in app.flashes %}
+        {% for message in messages %}
+            <div class="flex items-center p-4 mb-4 text-sm rounded-2xl shadow-sm border
+                {% if label == 'success' %}bg-green-50 text-green-700 border-green-100
+                {% elseif label == 'error' %}bg-red-50 text-red-700 border-red-100
+                {% else %}bg-blue-50 text-blue-700 border-blue-100{% endif %}" role="alert">
+                <i class="fas {% if label == 'success' %}fa-check-circle{% elseif label == 'error' %}fa-exclamation-circle{% else %}fa-info-circle{% endif %} mr-3 text-lg"></i>
+                <span class="font-bold">{{ message }}</span>
+            </div>
+        {% endfor %}
+    {% endfor %}
+</div>
+
+<!-- Main Content -->
+<main class="flex-1">
+    {% block body %}{% endblock %}
+</main>
+
+<!-- Footer -->
+<footer class="bg-white border-t border-gray-100 py-12">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div class="flex flex-col md:flex-row justify-between items-center space-y-6 md:space-y-0">
+            <div class="flex items-center space-x-2">
+                <div class="bg-gray-100 p-1.5 rounded-lg">
+                    <div class="h-4 w-4 bg-brand-500 rounded-sm"></div>
+                </div>
+                <span class="text-lg font-bold text-gray-900 tracking-tight">FlahaSmart</span>
+            </div>
+            <p class="text-sm text-gray-400 font-medium font-sans">
+                &copy; {{ "now"|date("Y") }} FlahaSmart. Le futur de l'agriculture connectée.
+            </p>
+            <div class="flex space-x-6 text-gray-400">
+                <a href="#" class="hover:text-brand-600 transition-colors"><i class="fab fa-twitter"></i></a>
+                <a href="#" class="hover:text-brand-600 transition-colors"><i class="fab fa-facebook"></i></a>
+                <a href="#" class="hover:text-brand-600 transition-colors"><i class="fab fa-linkedin"></i></a>
+            </div>
+        </div>
+    </div>
+</footer>
+
+<!-- JavaScripts -->
+{% block javascripts %}{% endblock %}
+            {% block importmap %}{{ importmap('app') }}{% endblock %}
+
+
+</body>
+</html>
